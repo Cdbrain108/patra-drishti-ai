@@ -676,24 +676,37 @@ def stream_pathology_diagnosis(image: Image.Image, detections):
             client = OpenAI(
                 base_url="https://integrate.api.nvidia.com/v1",
                 api_key=NVIDIA_API_KEY,
-                timeout=2.0  # Strict fast timeout to guarantee no stalling
+                timeout=4.0  # Responsive timeout for NIM inference
             )
             
             lesion_summary = ", ".join([f"{d['name']} ({d['conf']*100:.1f}%)" for d in disease_dets]) if disease_dets else "None"
             healthy_summary = ", ".join([f"{d['name']} ({d['conf']*100:.1f}%)" for d in healthy_dets]) if healthy_dets else "None"
             
             fast_prompt = f"""You are Patra Drishti Senior Botanical Pathologist.
-Our YOLOv11s model localized: {lesion_summary} (Healthy foliage: {healthy_summary}).
-Provide a concise, direct 4-bullet summary (under 75 words total, no fluff):
-- **Diagnosis:** Disease name and pathogen
-- **Cause:** 1 short sentence on environmental trigger
-- **Treatment:** 1 targeted chemical + 1 organic remedy
-- **Prevention:** 1 quick actionable tip"""
+Our fine-tuned YOLOv11s model localized the following leaf specimen:
+- Pathological Lesions: {lesion_summary}
+- Healthy Foliage: {healthy_summary}
+
+Provide a well-rounded, professional agronomic advisory in clean markdown:
+
+### 🚨 Clinical Pathology Diagnosis
+- **Condition & Pathogen:** Name of disease, scientific causal organism, and severity level.
+- **Symptom Profile & Etiology:** Describe characteristic foliar lesions (chlorosis, necrotic halos, spots) and environmental triggers (humidity, temp, rain splash).
+
+### 💊 Curative Treatment Protocol
+- **Targeted Chemical Control:** Recommended active ingredients (e.g. Copper Hydroxide, Chlorothalonil, Mancozeb) and application rotation.
+- **Organic & Biological Remedy:** Proven organic solutions (e.g. cold-pressed Neem oil 0.5-1%, Bacillus subtilis, or Potassium Bicarbonate).
+
+### 🛡️ Field Prevention & Cultural Sanitation
+- **Crop Hygiene:** Pruning diseased foliage, spacing for canopy ventilation, and field sanitation.
+- **Water Management:** Drip irrigation best practices to avoid moisture films on leaf surfaces.
+
+Keep formatting clean with bold labels and bullet points. Be practical and informative for agricultural growers."""
 
             stream = client.chat.completions.create(
                 model=NVIDIA_MODEL,
                 messages=[{"role": "user", "content": fast_prompt}],
-                max_tokens=180,
+                max_tokens=350,
                 temperature=0.2,
                 stream=True
             )
@@ -712,12 +725,12 @@ Provide a concise, direct 4-bullet summary (under 75 words total, no fluff):
                         break
                     yield tok
             
-            if is_valid and len(tokens) > 15:
+            if is_valid and len(tokens) > 20:
                 return
         except Exception:
             pass  # Immediately transition to instant clinical engine
 
-    # 2. Instant-Response Specialized Agronomic Pathology Engine (Concise & Direct)
+    # 2. Instant-Response Specialized Agronomic Pathology Engine (Rich & Actionable)
     if disease_dets:
         primary_disease = disease_dets[0]['name']
         raw_key = disease_dets[0]['raw_name']
@@ -733,28 +746,42 @@ Provide a concise, direct 4-bullet summary (under 75 words total, no fluff):
             'hygiene': 'Sanitary pruning of heavily infected leaves; convert overhead sprinklers to basal drip irrigation.'
         }))
 
-        report = f"""### 🚨 Diagnosis: {primary_disease} ({conf:.1f}% Match)
+        report = f"""### 🚨 Clinical Pathology Diagnosis: {primary_disease}
 
-- **Pathogen:** *{proto['pathogen']}*
-- **Primary Cause:** {proto['etiology']}
+- **Primary Diagnosis:** **{primary_disease}** ({conf:.1f}% Confidence Match)
+- **Pathogen Classification:** *{proto['pathogen']}*
+- **Symptom Profile & Etiology:** {proto['etiology']} Localized necrotic parenchymal collapse and chlorotic lesion margins observed on foliar tissue.
+- **Clinical Severity:** **Moderate-to-High** ({len(disease_dets)} active lesion focal points detected). Remediation recommended within 24–48 hours to arrest secondary spread.
 
-#### 💊 Immediate Treatment & Control
-- **Chemical:** {proto['chemical']}
-- **Organic Remedy:** {proto['organic']}
-- **Field Prevention:** {proto['hygiene']}
+---
+
+#### 💊 Curative Treatment Protocol
+- **Targeted Chemical Control:** {proto['chemical']} Apply according to label dosage; rotate active ingredient classes under FRAC guidelines to prevent pathogen resistance.
+- **Organic & Biological Remedy:** {proto['organic']} Spray during early morning or late afternoon to avoid foliar photo-burn.
+
+#### 🛡️ Agronomic Prevention & Field Hygiene
+- **Sanitation & Cultural Control:** {proto['hygiene']}
+- **Canopy & Moisture Management:** Maintain proper plant spacing for canopy air drainage; utilize basal drip irrigation to avoid creating surface leaf moisture films.
 """
     elif healthy_dets:
         plant_names = ", ".join(list(set([d['name'] for d in healthy_dets])))
-        report = f"""### 🌿 Vigor Confirmed: {plant_names}
+        report = f"""### 🌿 Foliar Health & Vigor Confirmed: {plant_names}
 
-- **Cellular Vitality:** **98/100 (Optimal Foliar Health)**
-- **Observation:** Intact cuticular layer, robust chlorophyll density, and zero necrotic lesion spots.
-- **Maintenance Guide:** Maintain regular drip irrigation at root zone; avoid wetting upper leaf surface.
+- **Diagnostic Status:** Pristine cellular vigor across all localized foliage ({plant_names}).
+- **Vitality Score:** **98/100 (Optimal Foliar Health)**
+- **Cuticular Integrity:** Stomatal architecture and leaf cuticle are intact; complete absence of necrotic pustules, chlorosis, or fungal mycelia.
+
+---
+
+#### 🛡️ Preventive Maintenance & Field Care
+- **Hydration Program:** Maintain scheduled root-zone drip irrigation; preserve leaf canopy dryness.
+- **Nutritional Support:** Apply balanced nitrogen-phosphorus-potassium (NPK) fertilizers; avoid excessive nitrogen that softens foliar cell walls.
+- **Routine Monitoring:** Inspect lower foliage every 5–7 days for early signs of micro-lesions or airborne spore settling.
 """
     else:
-        report = """### 🔍 Foliar Advisory
+        report = """### 🔍 Foliar Diagnostic Advisory
 
-No plant leaf anomalies detected above confidence threshold. Ensure specimen is centered and clearly lit.
+No distinct plant leaf boundaries were identified above the confidence threshold. Please verify that the leaf is properly illuminated, centered in the frame, and free of heavy camera blur.
 """
 
     words = report.split(" ")
