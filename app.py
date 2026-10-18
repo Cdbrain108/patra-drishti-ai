@@ -431,6 +431,164 @@ button[kind="primary"]:hover {
     box-shadow: 0 6px 25px rgba(16, 185, 129, 0.55) !important;
     transform: translateY(-1px) !important;
 }
+
+/* ========================================================================= */
+/* Comprehensive Mobile & Tablet Responsive Optimizations (Screens < 768px) */
+/* ========================================================================= */
+@media (max-width: 768px) {
+    /* Tighten page margins on mobile devices */
+    .main .block-container {
+        padding-left: 0.85rem !important;
+        padding-right: 0.85rem !important;
+        padding-top: 1rem !important;
+        padding-bottom: 2rem !important;
+    }
+
+    /* Navigation Header */
+    .nav-brand-container {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 12px !important;
+    }
+    .nav-brand-container img {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 10px !important;
+    }
+    .nav-title {
+        font-size: 1.45rem !important;
+    }
+    .nav-sub-lang {
+        font-size: 1.05rem !important;
+    }
+    .nav-subtitle {
+        font-size: 0.78rem !important;
+        line-height: 1.3 !important;
+    }
+    .nav-action-btn {
+        text-align: left !important;
+        padding-top: 0 !important;
+        margin-bottom: 12px !important;
+    }
+
+    /* Splash Screen Scaling */
+    .splash-hero {
+        margin: 2vh auto 1vh auto !important;
+        padding: 4px !important;
+    }
+    .splash-logo-img {
+        width: 110px !important;
+        height: 110px !important;
+        border-radius: 20px !important;
+        margin-bottom: 14px !important;
+    }
+    .splash-badge {
+        font-size: 0.7rem !important;
+        padding: 4px 12px !important;
+        margin-bottom: 10px !important;
+    }
+    .splash-title-text {
+        font-size: 2.2rem !important;
+    }
+    .splash-sub-text {
+        font-size: 1.25rem !important;
+        margin-bottom: 10px !important;
+    }
+    .splash-tagline-text {
+        font-size: 0.95rem !important;
+        line-height: 1.4 !important;
+    }
+    .splash-desc-text {
+        font-size: 0.85rem !important;
+        line-height: 1.5 !important;
+        margin-bottom: 18px !important;
+    }
+
+    /* Dot-Matrix Neural Loader Responsive Sizing */
+    .matrix-container {
+        padding: 24px 10px !important;
+        min-height: 220px !important;
+    }
+    .matrix-grid {
+        grid-template-columns: repeat(16, 9px) !important;
+        grid-template-rows: repeat(10, 9px) !important;
+        gap: 4px !important;
+        margin-bottom: 14px !important;
+    }
+    .matrix-dot {
+        width: 4px !important;
+        height: 4px !important;
+    }
+    .matrix-pill {
+        bottom: 10px !important;
+        right: 12px !important;
+        padding: 4px 10px !important;
+        font-size: 0.72rem !important;
+    }
+
+    /* Specimen Input Radio - Stack vertically for touch-friendly targets */
+    div[data-testid="stRadio"] div[role="radiogroup"] {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    div[data-testid="stRadio"] div[role="radiogroup"] label {
+        padding: 8px 12px !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border-radius: 8px !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        width: 100% !important;
+    }
+
+    /* Cards & Container Padding */
+    .pd-card {
+        padding: 16px 14px !important;
+        border-radius: 12px !important;
+        margin-bottom: 14px !important;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        padding: 14px 12px !important;
+        border-radius: 12px !important;
+    }
+
+    /* Stats Grid: 2x2 layout on phones */
+    div[data-testid="stHorizontalBlock"]:has(.stat-box) {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(.stat-box) > div {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    .stat-box {
+        padding: 10px 8px !important;
+    }
+    .stat-val {
+        font-size: 1.35rem !important;
+    }
+    .stat-lbl {
+        font-size: 0.68rem !important;
+    }
+
+    /* Action Buttons (Touch Friendly) */
+    .stButton > button {
+        min-height: 46px !important;
+        font-size: 0.95rem !important;
+    }
+
+    /* Tabs Touch Sizing */
+    button[data-baseweb="tab"] {
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        font-size: 0.88rem !important;
+    }
+
+    /* Alert Banners */
+    .disease-pill, .healthy-pill {
+        font-size: 0.78rem !important;
+        padding: 4px 10px !important;
+    }
+}
 </style>
 """
 
@@ -490,13 +648,11 @@ def render_splash_screen():
     """
     st.markdown(splash_html, unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns([1.2, 1.6, 1.2])
+    col1, col2, col3 = st.columns([1, 1.8, 1])
     with col2:
         if st.button("🚀 Enter Vision Laboratory", use_container_width=True, type="primary"):
             st.session_state.intro_shown = True
             st.rerun()
-
-        st.markdown('</div>', unsafe_allow_html=True)
 
 
 # -----------------------------------------------------------------------------
@@ -812,13 +968,13 @@ def main():
         )
         st.markdown(
             f"""
-            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
+            <div class="nav-brand-container" style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
                 {logo_snippet}
                 <div>
-                    <div style="font-family: 'Outfit', sans-serif; font-size: 2.1rem; font-weight: 800; color: #F8FAFC; line-height: 1.1;">
-                        Patra Drishti <span style="font-size: 1.3rem; font-weight: 500; color: #34D399;">(पत्र दृष्टि)</span>
+                    <div class="nav-title" style="font-family: 'Outfit', sans-serif; font-size: 2.1rem; font-weight: 800; color: #F8FAFC; line-height: 1.1;">
+                        Patra Drishti <span class="nav-sub-lang" style="font-size: 1.3rem; font-weight: 500; color: #34D399;">(पत्र दृष्टि)</span>
                     </div>
-                    <div style="font-size: 0.9rem; color: #94A3B8;">
+                    <div class="nav-subtitle" style="font-size: 0.9rem; color: #94A3B8;">
                         AI-Powered Botanical Vision &amp; Pathology Advisor — Seeing Beyond the Leaf
                     </div>
                 </div>
@@ -827,7 +983,7 @@ def main():
             unsafe_allow_html=True
         )
     with col_h2:
-        st.markdown('<div style="text-align: right; padding-top: 10px;">', unsafe_allow_html=True)
+        st.markdown('<div class="nav-action-btn" style="text-align: right; padding-top: 10px;">', unsafe_allow_html=True)
         if st.button("🔁 Replay Intro Splash", use_container_width=True):
             st.session_state.intro_shown = False
             st.rerun()
