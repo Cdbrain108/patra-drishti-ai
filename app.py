@@ -572,7 +572,7 @@ Based on the uploaded image and YOLO detections, provide an expert, natural, wel
 
 Keep the tone authoritative, practical for farmers/agronomists, clear, and empathetic."""
 
-    # Run NVIDIA NIM Meta Llama 3.2 Vision
+    # Run NVIDIA NIM Meta Llama 3.2 Vision with refusal guardrail validation
     if OPENAI_AVAILABLE and NVIDIA_API_KEY:
         try:
             client = OpenAI(
@@ -581,7 +581,7 @@ Keep the tone authoritative, practical for farmers/agronomists, clear, and empat
             )
             b64_image = pil_to_base64(image)
 
-            stream = client.chat.completions.create(
+            res = client.chat.completions.create(
                 model=NVIDIA_MODEL,
                 messages=[{
                     "role": "user",
@@ -594,16 +594,23 @@ Keep the tone authoritative, practical for farmers/agronomists, clear, and empat
                     ]
                 }],
                 max_tokens=650,
-                temperature=0.2,
-                stream=True
+                temperature=0.2
             )
-
-            for chunk in stream:
-                if chunk.choices and chunk.choices[0].delta.content:
-                    yield chunk.choices[0].delta.content
-            return
+            
+            content = res.choices[0].message.content or ""
+            refusal_triggers = [
+                "cannot fulfill", "programming or ethical", "ethical guidelines", 
+                "explicit or harmful", "morally reprehensible", "i'm just an ai", "i am an ai"
+            ]
+            # Verify the response is an actual pathology diagnosis and not a hallucinated safety refusal
+            if content and len(content) > 60 and not any(t in content.lower() for t in refusal_triggers):
+                words = content.split(" ")
+                for word in words:
+                    yield word + " "
+                    time.sleep(0.015)
+                return
         except Exception:
-            pass  # Fall through to built-in clinical pathology engine
+            pass  # Fall through to built-in verified clinical pathology engine
 
     # Built-in High-Fidelity Botanical Pathology Engine Fallback
     if not disease_dets and healthy_dets:
