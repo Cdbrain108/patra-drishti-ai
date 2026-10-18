@@ -81,27 +81,27 @@ HEALTHY_CLASS_NAMES = {
     'grape leaf': 'Grape healthy leaf'
 }
 
-# 18 Verified Benchmark Crop Samples
+# 18 Real-World Foliar Specimens (Neutral Labels - AI Identifies Health & Pathology)
 SAMPLE_SPECIMENS = {
     "(Select a specimen to test)": None,
-    "🍅 Tomato: Septoria Leaf Spot (Disease)": os.path.join("assets", "samples", "sample_tomato_septoria_leaf_spot.jpg"),
-    "🍅 Tomato: Leaf Mold (Disease)": os.path.join("assets", "samples", "sample_tomato_mold_leaf.jpg"),
-    "🍅 Tomato: Mosaic Virus (Disease)": os.path.join("assets", "samples", "sample_tomato_leaf_mosaic_virus.jpg"),
-    "🥔 Potato: Late Blight (Disease)": os.path.join("assets", "samples", "sample_potato_leaf_late_blight.jpg"),
-    "🥔 Potato: Healthy Foliage (Healthy)": os.path.join("assets", "samples", "sample_potato_leaf.jpg"),
-    "🌽 Corn: Common Rust (Disease)": os.path.join("assets", "samples", "sample_corn_rust_leaf.jpg"),
-    "🌽 Corn: Northern Leaf Blight (Disease)": os.path.join("assets", "samples", "sample_corn_leaf_blight.jpg"),
-    "🌽 Corn: Gray Leaf Spot (Disease)": os.path.join("assets", "samples", "sample_corn_gray_leaf_spot.jpg"),
-    "🍎 Apple: Scab Lesions (Disease)": os.path.join("assets", "samples", "sample_apple_scab_leaf.jpg"),
-    "🍎 Apple: Cedar Rust (Disease)": os.path.join("assets", "samples", "sample_apple_rust_leaf.jpg"),
-    "🍎 Apple: Healthy Foliage (Healthy)": os.path.join("assets", "samples", "sample_apple_leaf.jpg"),
-    "🍇 Grape: Black Rot (Disease)": os.path.join("assets", "samples", "sample_grape_leaf_black_rot.jpg"),
-    "🍇 Grape: Healthy Foliage (Healthy)": os.path.join("assets", "samples", "sample_grape_leaf.jpg"),
-    "🎃 Squash: Powdery Mildew (Disease)": os.path.join("assets", "samples", "sample_squash_powdery_mildew_leaf.jpg"),
-    "🍑 Peach: Healthy Foliage (Healthy)": os.path.join("assets", "samples", "sample_peach_leaf.jpg"),
-    "🍓 Strawberry: Healthy Foliage (Healthy)": os.path.join("assets", "samples", "sample_strawberry_leaf.jpg"),
-    "🫑 Bell Pepper: Bacterial Leaf Spot (Disease)": os.path.join("assets", "samples", "sample_bell_pepper_leaf_spot.jpg"),
-    "🫑 Bell Pepper: Healthy Foliage (Healthy)": os.path.join("assets", "samples", "sample_bell_pepper_leaf.jpg")
+    "🍅 Tomato Leaf Specimen 01": os.path.join("assets", "samples", "sample_tomato_septoria_leaf_spot.jpg"),
+    "🍅 Tomato Leaf Specimen 02": os.path.join("assets", "samples", "sample_tomato_mold_leaf.jpg"),
+    "🍅 Tomato Leaf Specimen 03": os.path.join("assets", "samples", "sample_tomato_leaf_mosaic_virus.jpg"),
+    "🥔 Potato Leaf Specimen 01": os.path.join("assets", "samples", "sample_potato_leaf_late_blight.jpg"),
+    "🥔 Potato Leaf Specimen 02": os.path.join("assets", "samples", "sample_potato_leaf.jpg"),
+    "🌽 Corn Leaf Specimen 01": os.path.join("assets", "samples", "sample_corn_rust_leaf.jpg"),
+    "🌽 Corn Leaf Specimen 02": os.path.join("assets", "samples", "sample_corn_leaf_blight.jpg"),
+    "🌽 Corn Leaf Specimen 03": os.path.join("assets", "samples", "sample_corn_gray_leaf_spot.jpg"),
+    "🍎 Apple Leaf Specimen 01": os.path.join("assets", "samples", "sample_apple_scab_leaf.jpg"),
+    "🍎 Apple Leaf Specimen 02": os.path.join("assets", "samples", "sample_apple_rust_leaf.jpg"),
+    "🍎 Apple Leaf Specimen 03": os.path.join("assets", "samples", "sample_apple_leaf.jpg"),
+    "🍇 Grape Leaf Specimen 01": os.path.join("assets", "samples", "sample_grape_leaf_black_rot.jpg"),
+    "🍇 Grape Leaf Specimen 02": os.path.join("assets", "samples", "sample_grape_leaf.jpg"),
+    "🎃 Squash Leaf Specimen": os.path.join("assets", "samples", "sample_squash_powdery_mildew_leaf.jpg"),
+    "🍑 Peach Leaf Specimen": os.path.join("assets", "samples", "sample_peach_leaf.jpg"),
+    "🍓 Strawberry Leaf Specimen": os.path.join("assets", "samples", "sample_strawberry_leaf.jpg"),
+    "🫑 Bell Pepper Leaf Specimen 01": os.path.join("assets", "samples", "sample_bell_pepper_leaf_spot.jpg"),
+    "🫑 Bell Pepper Leaf Specimen 02": os.path.join("assets", "samples", "sample_bell_pepper_leaf.jpg")
 }
 
 
