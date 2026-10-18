@@ -1,0 +1,36 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment & Secrets
+.env
+.env.*
+*.local
+secrets.toml
+.streamlit/secrets.toml
+
+# Large Archives & Raw Packages
+*.zip
+*.tar.gz
+*.rar
+plant_project_package.zip
+
+# Training debug batch grids (app uses results.png & assets/ instead)
+train_batch*.jpg
+val_batch*.jpg
+
+# Redundant weights (best.pt is tracked for inference)
+weights/last.pt
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# Editor & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
