@@ -153,46 +153,28 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 /* Center and clean splash screen */
-.splash-outer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 80vh;
-    width: 100%;
-    margin: 0 auto;
-    text-align: center;
+.splash-hero {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+    max-width: 680px !important;
+    margin: 4vh auto 1vh auto !important;
+    padding: 10px !important;
 }
 
-.splash-container {
-    max-width: 680px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    animation: splashFadeIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes splashFadeIn {
-    0% {
-        opacity: 0;
-        transform: scale(0.94) translateY(20px);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
+.splash-hero * {
+    text-align: center !important;
 }
 
 .splash-logo-img {
-    width: 170px;
-    height: 170px;
+    width: 165px;
+    height: 165px;
     border-radius: 26px;
-    box-shadow: 0 0 50px rgba(16, 185, 129, 0.35);
-    margin: 0 auto 24px auto;
+    box-shadow: 0 0 50px rgba(16, 185, 129, 0.4);
+    margin: 0 auto 20px auto;
     border: 1px solid rgba(52, 211, 153, 0.4);
     display: block;
     transition: transform 0.4s ease;
@@ -203,10 +185,7 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 .splash-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    display: inline-block;
     padding: 6px 18px;
     background: rgba(16, 185, 129, 0.12);
     border: 1px solid rgba(16, 185, 129, 0.3);
@@ -214,46 +193,46 @@ html, body, [data-testid="stAppViewContainer"] {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.8rem;
     color: #34D399;
-    margin: 0 auto 16px auto;
+    margin: 0 auto 14px auto;
 }
 
-.splash-title {
+.splash-title-text {
     font-family: 'Outfit', sans-serif;
-    font-size: 3.2rem;
+    font-size: 3.3rem;
     font-weight: 800;
     line-height: 1.15;
     background: linear-gradient(135deg, #FFFFFF 25%, #34D399 70%, #06B6D4 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin: 0 auto 6px auto;
-    text-align: center;
+    margin: 0 auto 4px auto;
+    width: 100%;
 }
 
-.splash-sub-hindi {
+.splash-sub-text {
     font-family: 'Outfit', sans-serif;
-    font-size: 1.8rem;
+    font-size: 1.7rem;
     font-weight: 500;
     color: #94A3B8;
     margin: 0 auto 16px auto;
-    text-align: center;
+    width: 100%;
 }
 
-.splash-tagline {
+.splash-tagline-text {
     font-size: 1.12rem;
     color: #CBD5E1;
     font-weight: 500;
     margin: 0 auto 10px auto;
-    text-align: center;
     line-height: 1.5;
+    width: 100%;
 }
 
-.splash-desc {
-    font-size: 0.95rem;
+.splash-desc-text {
+    font-size: 0.94rem;
     color: #94A3B8;
     max-width: 580px;
-    margin: 0 auto 30px auto;
-    text-align: center;
+    margin: 0 auto 26px auto;
     line-height: 1.6;
+    width: 100%;
 }
 
 /* Glassmorphism Cards */
@@ -467,35 +446,24 @@ def load_yolo_model():
 # Intro Splash Screen (Perfect Centering)
 # -----------------------------------------------------------------------------
 def render_splash_screen():
-    # Centering columns: 1fr | 2fr | 1fr
-    _, center_col, _ = st.columns([1, 2.2, 1])
+    logo_html = f'<img src="data:image/png;base64,{LOGO_B64}" class="splash-logo-img" alt="Patra Drishti Logo"/>' if LOGO_B64 else ''
     
-    with center_col:
-        st.markdown('<div class="splash-container">', unsafe_allow_html=True)
-        
-        if LOGO_B64:
-            st.markdown(
-                f'<img src="data:image/png;base64,{LOGO_B64}" class="splash-logo-img" alt="Patra Drishti Logo"/>',
-                unsafe_allow_html=True
-            )
-        
-        st.markdown(
-            '<div class="splash-badge">AI BOTANICAL VISION & PATHOLOGY ADVISOR</div>',
-            unsafe_allow_html=True
-        )
-        st.markdown(
-            '<h1 class="splash-title">Patra Drishti</h1>'
-            '<div class="splash-sub-hindi">(पत्र दृष्टि)</div>',
-            unsafe_allow_html=True
-        )
-        st.markdown(
-            '<div class="splash-tagline">"Seeing Beyond the Leaf: YOLOv11 Computer Vision + Multimodal AI Pathologist"</div>'
-            '<div class="splash-desc">'
-            'Automated cellular lesion localization, multi-class triage across 27 plant varieties, and real-time streaming clinical agronomy guidance.'
-            '</div>',
-            unsafe_allow_html=True
-        )
-
+    splash_html = f"""
+    <div class="splash-hero">
+        {logo_html}
+        <div class="splash-badge">AI BOTANICAL VISION &amp; PATHOLOGY ADVISOR</div>
+        <div class="splash-title-text">Patra Drishti</div>
+        <div class="splash-sub-text">(पत्र दृष्टि)</div>
+        <div class="splash-tagline-text">"Seeing Beyond the Leaf: YOLOv11 Computer Vision + Multimodal AI Pathologist"</div>
+        <div class="splash-desc-text">
+            Automated cellular lesion localization, multi-class triage across 27 plant varieties, and real-time streaming clinical agronomy guidance.
+        </div>
+    </div>
+    """
+    st.markdown(splash_html, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1.2, 1.6, 1.2])
+    with col2:
         if st.button("🚀 Enter Vision Laboratory", use_container_width=True, type="primary"):
             st.session_state.intro_shown = True
             st.rerun()
