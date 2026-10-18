@@ -81,27 +81,29 @@ HEALTHY_CLASS_NAMES = {
     'grape leaf': 'Grape healthy leaf'
 }
 
-# 18 Real-World Foliar Specimens (Neutral Labels - AI Identifies Health & Pathology)
+# 20 Real-World Foliar Specimens (Balanced Healthy & Diseased with Neutral Labels)
 SAMPLE_SPECIMENS = {
     "(Select a specimen to test)": None,
+    "🍎 Apple Leaf Specimen 01": os.path.join("assets", "samples", "sample_apple_scab_leaf.jpg"),
+    "🍎 Apple Leaf Specimen 02": os.path.join("assets", "samples", "sample_apple_leaf.jpg"),
+    "🥔 Potato Leaf Specimen 01": os.path.join("assets", "samples", "sample_potato_leaf_late_blight.jpg"),
+    "🥔 Potato Leaf Specimen 02": os.path.join("assets", "samples", "sample_potato_leaf.jpg"),
+    "🫐 Blueberry Leaf Specimen": os.path.join("assets", "samples", "sample_blueberry_healthy_leaf.jpg"),
+    "🍓 Strawberry Leaf Specimen": os.path.join("assets", "samples", "sample_strawberry_leaf.jpg"),
+    "🍒 Cherry Leaf Specimen": os.path.join("assets", "samples", "sample_cherry_healthy_leaf.jpg"),
+    "🍇 Raspberry Leaf Specimen": os.path.join("assets", "samples", "sample_raspberry_healthy_leaf.jpg"),
+    "🍑 Peach Leaf Specimen": os.path.join("assets", "samples", "sample_peach_leaf.jpg"),
+    "🫑 Bell Pepper Leaf Specimen 01": os.path.join("assets", "samples", "sample_bell_pepper_leaf_spot.jpg"),
+    "🫑 Bell Pepper Leaf Specimen 02": os.path.join("assets", "samples", "sample_bell_pepper_leaf.jpg"),
     "🍅 Tomato Leaf Specimen 01": os.path.join("assets", "samples", "sample_tomato_septoria_leaf_spot.jpg"),
     "🍅 Tomato Leaf Specimen 02": os.path.join("assets", "samples", "sample_tomato_mold_leaf.jpg"),
     "🍅 Tomato Leaf Specimen 03": os.path.join("assets", "samples", "sample_tomato_leaf_mosaic_virus.jpg"),
-    "🥔 Potato Leaf Specimen 01": os.path.join("assets", "samples", "sample_potato_leaf_late_blight.jpg"),
-    "🥔 Potato Leaf Specimen 02": os.path.join("assets", "samples", "sample_potato_leaf.jpg"),
     "🌽 Corn Leaf Specimen 01": os.path.join("assets", "samples", "sample_corn_rust_leaf.jpg"),
     "🌽 Corn Leaf Specimen 02": os.path.join("assets", "samples", "sample_corn_leaf_blight.jpg"),
     "🌽 Corn Leaf Specimen 03": os.path.join("assets", "samples", "sample_corn_gray_leaf_spot.jpg"),
-    "🍎 Apple Leaf Specimen 01": os.path.join("assets", "samples", "sample_apple_scab_leaf.jpg"),
-    "🍎 Apple Leaf Specimen 02": os.path.join("assets", "samples", "sample_apple_rust_leaf.jpg"),
-    "🍎 Apple Leaf Specimen 03": os.path.join("assets", "samples", "sample_apple_leaf.jpg"),
     "🍇 Grape Leaf Specimen 01": os.path.join("assets", "samples", "sample_grape_leaf_black_rot.jpg"),
     "🍇 Grape Leaf Specimen 02": os.path.join("assets", "samples", "sample_grape_leaf.jpg"),
-    "🎃 Squash Leaf Specimen": os.path.join("assets", "samples", "sample_squash_powdery_mildew_leaf.jpg"),
-    "🍑 Peach Leaf Specimen": os.path.join("assets", "samples", "sample_peach_leaf.jpg"),
-    "🍓 Strawberry Leaf Specimen": os.path.join("assets", "samples", "sample_strawberry_leaf.jpg"),
-    "🫑 Bell Pepper Leaf Specimen 01": os.path.join("assets", "samples", "sample_bell_pepper_leaf_spot.jpg"),
-    "🫑 Bell Pepper Leaf Specimen 02": os.path.join("assets", "samples", "sample_bell_pepper_leaf.jpg")
+    "🎃 Squash Leaf Specimen": os.path.join("assets", "samples", "sample_squash_powdery_mildew_leaf.jpg")
 }
 
 
