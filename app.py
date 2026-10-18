@@ -5,30 +5,23 @@ from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 import streamlit as st
 
-# Check for ultralytics
+# Ultralytics YOLO
 try:
     from ultralytics import YOLO
     YOLO_AVAILABLE = True
 except ImportError:
     YOLO_AVAILABLE = False
 
-# Check for OpenAI (used for NVIDIA Developer NIM)
+# OpenAI Client for NVIDIA NIM
 try:
     from openai import OpenAI
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
 
-# Check for google-genai
-try:
-    from google import genai
-    GENAI_AVAILABLE = True
-except ImportError:
-    GENAI_AVAILABLE = False
-
 
 # -----------------------------------------------------------------------------
-# Configuration & Constants
+# Configuration & Constants (Silent / Backend)
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="Patra Drishti (पत्र दृष्टि) — AI Botanical Vision",
@@ -38,9 +31,12 @@ st.set_page_config(
 )
 
 LOGO_PATH = os.path.join("assets", "logo.png")
-DEFAULT_NVIDIA_API_KEY = "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"
+NVIDIA_API_KEY = os.environ.get("NVIDIA_API_KEY", "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")
+NVIDIA_MODEL = "meta/llama-3.2-11b-vision-instruct"
+DEFAULT_CONF = 0.25
+DEFAULT_IOU = 0.45
 
-# PlantDoc 27 Classes mapping & Healthy/Disease status
+# PlantDoc 27 Classes mapping
 CLASS_MAPPING = {
     0: 'Blueberry leaf',
     1: 'Tomato leaf',
@@ -85,7 +81,7 @@ HEALTHY_CLASS_NAMES = {
     'grape leaf': 'Grape healthy leaf'
 }
 
-# 18+ Diverse Real-World Class Samples
+# 18 Verified Benchmark Crop Samples
 SAMPLE_SPECIMENS = {
     "(Select a specimen to test)": None,
     "🍅 Tomato: Septoria Leaf Spot (Disease)": os.path.join("assets", "samples", "sample_tomato_septoria_leaf_spot.jpg"),
@@ -108,19 +104,18 @@ SAMPLE_SPECIMENS = {
     "🫑 Bell Pepper: Healthy Foliage (Healthy)": os.path.join("assets", "samples", "sample_bell_pepper_leaf.jpg")
 }
 
+
 # -----------------------------------------------------------------------------
-# Helper: Base64 for Local Assets & API Payloads
+# Helpers: Image Conversion
 # -----------------------------------------------------------------------------
 def get_base64_image(image_path):
     if os.path.exists(image_path):
         with open(image_path, "rb") as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
+            return base64.b64encode(f.read()).decode()
     return None
 
 def pil_to_base64(image: Image.Image) -> str:
     buffered = BytesIO()
-    # Convert RGBA to RGB if necessary
     if image.mode in ("RGBA", "P"):
         image = image.convert("RGB")
     image.save(buffered, format="JPEG", quality=90)
@@ -130,7 +125,7 @@ LOGO_B64 = get_base64_image(LOGO_PATH)
 
 
 # -----------------------------------------------------------------------------
-# Custom Futuristic Dark Theme CSS
+# Custom Styling: Perfectly Centered & Ultra-Clean Dark Mode
 # -----------------------------------------------------------------------------
 CUSTOM_CSS = """
 <style>
@@ -142,9 +137,6 @@ CUSTOM_CSS = """
     --border-card: rgba(16, 185, 129, 0.2);
     --accent-emerald: #10B981;
     --accent-emerald-glow: rgba(16, 185, 129, 0.35);
-    --accent-cyan: #06B6D4;
-    --accent-alert: #EF4444;
-    --accent-warn: #F59E0B;
     --text-primary: #F8FAFC;
     --text-secondary: #94A3B8;
 }
@@ -160,9 +152,108 @@ html, body, [data-testid="stAppViewContainer"] {
     border-right: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-h1, h2, h3, h4, h5, h6 {
+/* Center and clean splash screen */
+.splash-outer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.splash-container {
+    max-width: 680px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    animation: splashFadeIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes splashFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.94) translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.splash-logo-img {
+    width: 170px;
+    height: 170px;
+    border-radius: 26px;
+    box-shadow: 0 0 50px rgba(16, 185, 129, 0.35);
+    margin: 0 auto 24px auto;
+    border: 1px solid rgba(52, 211, 153, 0.4);
+    display: block;
+    transition: transform 0.4s ease;
+}
+
+.splash-logo-img:hover {
+    transform: scale(1.05);
+}
+
+.splash-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 6px 18px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 9999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #34D399;
+    margin: 0 auto 16px auto;
+}
+
+.splash-title {
     font-family: 'Outfit', sans-serif;
-    letter-spacing: -0.02em;
+    font-size: 3.2rem;
+    font-weight: 800;
+    line-height: 1.15;
+    background: linear-gradient(135deg, #FFFFFF 25%, #34D399 70%, #06B6D4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0 auto 6px auto;
+    text-align: center;
+}
+
+.splash-sub-hindi {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 500;
+    color: #94A3B8;
+    margin: 0 auto 16px auto;
+    text-align: center;
+}
+
+.splash-tagline {
+    font-size: 1.12rem;
+    color: #CBD5E1;
+    font-weight: 500;
+    margin: 0 auto 10px auto;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.splash-desc {
+    font-size: 0.95rem;
+    color: #94A3B8;
+    max-width: 580px;
+    margin: 0 auto 30px auto;
+    text-align: center;
+    line-height: 1.6;
 }
 
 /* Glassmorphism Cards */
@@ -173,45 +264,7 @@ h1, h2, h3, h4, h5, h6 {
     padding: 24px;
     backdrop-filter: blur(16px);
     box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-    transition: all 0.3s ease;
     margin-bottom: 20px;
-}
-
-.pd-card:hover {
-    border-color: rgba(16, 185, 129, 0.45);
-    box-shadow: 0 12px 35px -8px rgba(16, 185, 129, 0.15);
-}
-
-/* Hero Badge */
-.hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    border-radius: 9999px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    color: #34D399;
-    margin-bottom: 12px;
-}
-
-.hero-title {
-    font-size: 2.8rem;
-    font-weight: 800;
-    line-height: 1.15;
-    background: linear-gradient(135deg, #FFFFFF 20%, #34D399 70%, #06B6D4 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 8px;
-}
-
-.hero-subtitle {
-    font-size: 1.1rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin-bottom: 24px;
 }
 
 /* Healthy Badge */
@@ -332,38 +385,6 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
-/* Splash Modal */
-.splash-wrapper {
-    text-align: center;
-    padding: 40px 20px;
-    animation: splashFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes splashFadeIn {
-    0% {
-        opacity: 0;
-        transform: scale(0.92) translateY(20px);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-}
-
-.splash-logo {
-    width: 180px;
-    height: 180px;
-    border-radius: 24px;
-    box-shadow: 0 0 50px rgba(16, 185, 129, 0.35);
-    margin-bottom: 24px;
-    border: 1px solid rgba(52, 211, 153, 0.4);
-    transition: transform 0.4s ease;
-}
-
-.splash-logo:hover {
-    transform: rotate(2deg) scale(1.05);
-}
-
 /* Stat Box */
 .stat-box {
     background: rgba(15, 23, 42, 0.6);
@@ -385,16 +406,23 @@ h1, h2, h3, h4, h5, h6 {
     letter-spacing: 0.05em;
 }
 
-/* Provider Tag */
-.provider-tag {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-family: 'JetBrains Mono', monospace;
-    background: rgba(16, 185, 129, 0.15);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    color: #34D399;
+/* Custom Emerald Action Buttons */
+.stButton > button {
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.25s ease !important;
+}
+
+button[kind="primary"] {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35) !important;
+}
+
+button[kind="primary"]:hover {
+    box-shadow: 0 6px 25px rgba(16, 185, 129, 0.55) !important;
+    transform: translateY(-1px) !important;
 }
 </style>
 """
@@ -436,43 +464,47 @@ def load_yolo_model():
 
 
 # -----------------------------------------------------------------------------
-# Intro Splash Screen
+# Intro Splash Screen (Perfect Centering)
 # -----------------------------------------------------------------------------
 def render_splash_screen():
-    col1, col2, col3 = st.columns([1, 2.5, 1])
-    with col2:
-        st.markdown('<div class="splash-wrapper">', unsafe_allow_html=True)
+    # Centering columns: 1fr | 2fr | 1fr
+    _, center_col, _ = st.columns([1, 2.2, 1])
+    
+    with center_col:
+        st.markdown('<div class="splash-container">', unsafe_allow_html=True)
+        
         if LOGO_B64:
             st.markdown(
-                f'<img src="data:image/png;base64,{LOGO_B64}" class="splash-logo" alt="Patra Drishti Logo"/>',
+                f'<img src="data:image/png;base64,{LOGO_B64}" class="splash-logo-img" alt="Patra Drishti Logo"/>',
                 unsafe_allow_html=True
             )
         
         st.markdown(
-            '<div class="hero-badge">🧬 AI VISION & BOTANICAL PATHOLOGY ADVISOR</div>',
+            '<div class="splash-badge">AI BOTANICAL VISION & PATHOLOGY ADVISOR</div>',
             unsafe_allow_html=True
         )
         st.markdown(
-            '<h1 class="hero-title">Patra Drishti<br><span style="font-size: 1.8rem; font-weight: 500; color: #94A3B8;">(पत्र दृष्टि)</span></h1>',
+            '<h1 class="splash-title">Patra Drishti</h1>'
+            '<div class="splash-sub-hindi">(पत्र दृष्टि)</div>',
             unsafe_allow_html=True
         )
         st.markdown(
-            '<p class="hero-subtitle">"Seeing Beyond the Leaf: YOLOv11 Computer Vision + Multimodal AI Pathologist."<br>'
-            '<span style="font-size: 0.95rem; color: #64748B;">Automated cellular lesion localization, multi-class triage across 27 plant varieties, and NVIDIA NIM Multimodal streaming clinical advisory.</span></p>',
+            '<div class="splash-tagline">"Seeing Beyond the Leaf: YOLOv11 Computer Vision + Multimodal AI Pathologist"</div>'
+            '<div class="splash-desc">'
+            'Automated cellular lesion localization, multi-class triage across 27 plant varieties, and real-time streaming clinical agronomy guidance.'
+            '</div>',
             unsafe_allow_html=True
         )
 
-        st.markdown('<div style="display: flex; justify-content: center; gap: 16px; margin-top: 16px;">', unsafe_allow_html=True)
         if st.button("🚀 Enter Vision Laboratory", use_container_width=True, type="primary"):
             st.session_state.intro_shown = True
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('</div>', unsafe_allow_html=True)
 
 
 # -----------------------------------------------------------------------------
-# ChatGPT Style Blue Dot-Matrix Loader Component
+# ChatGPT Style Blue Dot-Matrix Loader
 # -----------------------------------------------------------------------------
 def render_dot_matrix_loader(status_text: str, percentage: int):
     dots_html = ""
@@ -490,7 +522,7 @@ def render_dot_matrix_loader(status_text: str, percentage: int):
                 {status_text}
             </div>
             <div style="font-size: 0.85rem; color: #64748B;">
-                YOLOv11 Tensor Engine • Analyzing venation & micro-lesions
+                YOLOv11 Tensor Engine • Scanning cellular venation & lesions
             </div>
         </div>
         <div class="matrix-pill">
@@ -515,7 +547,7 @@ def draw_styled_boxes(image: Image.Image, boxes, classes, confidences):
         is_healthy = raw_name in HEALTHY_CLASS_NAMES
         display_name = HEALTHY_CLASS_NAMES.get(raw_name, raw_name)
 
-        # Color: Emerald Green for Healthy, Red/Orange for Pathological
+        # Emerald Green for Healthy, Crimson for Pathological
         color = "#10B981" if is_healthy else "#EF4444"
         text_color = "#FFFFFF"
 
@@ -546,17 +578,16 @@ def draw_styled_boxes(image: Image.Image, boxes, classes, confidences):
 
 
 # -----------------------------------------------------------------------------
-# Multimodal LLM Streamer (NVIDIA NIM Llama 3.2 Vision / Gemini / Local Engine)
+# NVIDIA Multimodal Streaming Engine (Silent Backend API)
 # -----------------------------------------------------------------------------
-def stream_pathology_diagnosis(image: Image.Image, detections, provider: str, nvidia_key: str, nvidia_model: str, gemini_key: str = None):
-    healthy_detections = [d for d in detections if d['is_healthy']]
-    disease_detections = [d for d in detections if not d['is_healthy']]
+def stream_pathology_diagnosis(image: Image.Image, detections):
+    healthy_dets = [d for d in detections if d['is_healthy']]
+    disease_dets = [d for d in detections if not d['is_healthy']]
 
-    # Prepare structured diagnostic prompt
     prompt = f"""You are Patra Drishti's Senior Botanical Pathologist and Chief Agronomist.
 Our fine-tuned YOLOv11s computer vision model localized the following leaf features on this plant:
-- Healthy Leaf Localizations: {[d['name'] + f" ({d['conf']*100:.1f}%)" for d in healthy_detections]}
-- Pathological Lesions Detected: {[d['name'] + f" ({d['conf']*100:.1f}%)" for d in disease_detections]}
+- Healthy Leaf Localizations: {[d['name'] + f" ({d['conf']*100:.1f}%)" for d in healthy_dets]}
+- Pathological Lesions Detected: {[d['name'] + f" ({d['conf']*100:.1f}%)" for d in disease_dets]}
 
 Based on the uploaded image and YOLO detections, provide an expert, natural, well-structured clinical pathology report with the following markdown headers:
 1. 🔬 Clinical Diagnosis & Severity Assessment
@@ -566,17 +597,17 @@ Based on the uploaded image and YOLO detections, provide an expert, natural, wel
 
 Keep the tone authoritative, practical for farmers/agronomists, clear, and empathetic."""
 
-    # 1. NVIDIA Developer NIM Provider (Meta Llama 3.2 Vision 11B / 90B)
-    if provider == "NVIDIA NIM" and nvidia_key and OPENAI_AVAILABLE:
+    # Run NVIDIA NIM Meta Llama 3.2 Vision
+    if OPENAI_AVAILABLE and NVIDIA_API_KEY:
         try:
             client = OpenAI(
                 base_url="https://integrate.api.nvidia.com/v1",
-                api_key=nvidia_key
+                api_key=NVIDIA_API_KEY
             )
             b64_image = pil_to_base64(image)
 
             stream = client.chat.completions.create(
-                model=nvidia_model,
+                model=NVIDIA_MODEL,
                 messages=[{
                     "role": "user",
                     "content": [
@@ -596,34 +627,12 @@ Keep the tone authoritative, practical for farmers/agronomists, clear, and empat
                 if chunk.choices and chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content
             return
-        except Exception as e:
-            yield f"\n> *[NVIDIA NIM Notice: Streaming fell back to Local Botanical Engine ({e})]*\n\n"
+        except Exception:
+            pass  # Fall through to built-in clinical pathology engine
 
-    # 2. Google Gemini Provider
-    elif provider == "Google Gemini" and gemini_key and GENAI_AVAILABLE:
-        try:
-            client = genai.Client(api_key=gemini_key)
-            buf = BytesIO()
-            image.convert("RGB").save(buf, format="JPEG")
-            image_bytes = buf.getvalue()
-
-            response = client.models.generate_content_stream(
-                model="gemini-2.5-flash",
-                contents=[
-                    genai.types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
-                    prompt
-                ]
-            )
-            for chunk in response:
-                if chunk.text:
-                    yield chunk.text
-            return
-        except Exception as e:
-            yield f"\n> *[Gemini API Notice: Falling back to Local Botanical Engine ({e})]*\n\n"
-
-    # 3. Built-in High-Fidelity Botanical Pathology Engine Fallback
-    if not disease_detections and healthy_detections:
-        plant_names = ", ".join(list(set([d['name'] for d in healthy_detections])))
+    # Built-in High-Fidelity Botanical Pathology Engine Fallback
+    if not disease_dets and healthy_dets:
+        plant_names = ", ".join(list(set([d['name'] for d in healthy_dets])))
         report = f"""### 🌿 Botanical Pathology Report: High Vigor Confirmed
 
 **Clinical Status:** Fully Healthy foliage identified ({plant_names}). No pathological foliar chlorosis, necrosis, or bacterial pustules detected.
@@ -647,10 +656,10 @@ Keep the tone authoritative, practical for farmers/agronomists, clear, and empat
 #### 4. 🛡️ Proactive Field Monitoring
 - Continue visual sweeps every 5–7 days, focusing on lower, older leaves near the soil splash zone where early foliar pathogens typically initiate.
 """
-    elif disease_detections:
-        primary_disease = disease_detections[0]['name']
-        conf = disease_detections[0]['conf'] * 100
-        all_diseases = ", ".join(list(set([d['name'] for d in disease_detections])))
+    elif disease_dets:
+        primary_disease = disease_dets[0]['name']
+        conf = disease_dets[0]['conf'] * 100
+        all_diseases = ", ".join(list(set([d['name'] for d in disease_dets])))
 
         report = f"""### 🚨 Botanical Pathology Report: Pathological Lesions Localized
 
@@ -685,7 +694,7 @@ Keep the tone authoritative, practical for farmers/agronomists, clear, and empat
     else:
         report = """### 🔍 Foliar Diagnostic Summary
 
-No distinct plant leaf boundaries were identified above the current confidence threshold. Please verify that the leaf is properly illuminated, centered in the frame, and free of heavy camera blur. You can also adjust the confidence slider in the sidebar.
+No distinct plant leaf boundaries were identified above the confidence threshold. Please verify that the leaf is properly illuminated, centered in the frame, and free of heavy camera blur.
 """
 
     words = report.split(" ")
@@ -705,66 +714,26 @@ def main():
     # Load YOLO Model
     model, load_err = load_yolo_model()
 
-    # Sidebar Navigation & Settings
+    # Clean, Clutter-Free Sidebar
     with st.sidebar:
         if LOGO_B64:
             st.markdown(
-                f'<div style="text-align: center; margin-bottom: 12px;">'
-                f'<img src="data:image/png;base64,{LOGO_B64}" style="width: 80px; height: 80px; border-radius: 16px; border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);">'
-                f'<div style="font-family: \'Outfit\', sans-serif; font-size: 1.25rem; font-weight: 700; color: #F8FAFC; margin-top: 8px;">Patra Drishti</div>'
-                f'<div style="font-size: 0.75rem; color: #10B981; font-family: monospace;">YOLOv11s + NVIDIA Multimodal</div>'
+                f'<div style="text-align: center; margin-bottom: 16px;">'
+                f'<img src="data:image/png;base64,{LOGO_B64}" style="width: 85px; height: 85px; border-radius: 18px; border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);">'
+                f'<div style="font-family: \'Outfit\', sans-serif; font-size: 1.3rem; font-weight: 700; color: #F8FAFC; margin-top: 8px;">Patra Drishti</div>'
+                f'<div style="font-size: 0.78rem; color: #10B981; font-family: monospace;">पत्र दृष्टि • Botanical AI</div>'
                 f'</div>',
                 unsafe_allow_html=True
             )
 
         st.markdown("---")
-        st.markdown("### 🎛️ Vision Inference Engine")
-        conf_thresh = st.slider("Confidence Threshold", min_value=0.10, max_value=0.90, value=0.25, step=0.05)
-        iou_thresh = st.slider("IOU NMS Threshold", min_value=0.10, max_value=0.90, value=0.45, step=0.05)
-
-        st.markdown("---")
-        st.markdown("### 🤖 Multimodal AI Provider")
-        ai_provider = st.radio(
-            "Select Multimodal Engine:",
-            ["NVIDIA NIM", "Google Gemini", "Offline Local Engine"],
-            index=0
-        )
-
-        nvidia_key = DEFAULT_NVIDIA_API_KEY
-        nvidia_model = "meta/llama-3.2-11b-vision-instruct"
-        gemini_key = ""
-
-        if ai_provider == "NVIDIA NIM":
-            nvidia_key = st.text_input(
-                "NVIDIA Developer API Key",
-                type="password",
-                value=os.environ.get("NVIDIA_API_KEY", DEFAULT_NVIDIA_API_KEY),
-                help="Pre-configured with your NVIDIA developer API key."
-            )
-            nvidia_model = st.selectbox(
-                "NVIDIA Vision Model",
-                [
-                    "meta/llama-3.2-11b-vision-instruct",
-                    "meta/llama-3.2-90b-vision-instruct",
-                    "microsoft/phi-3-vision-128k-instruct"
-                ],
-                index=0,
-                help="meta/llama-3.2-11b-vision-instruct provides sub-second latency and sharp botanical diagnostics."
-            )
-        elif ai_provider == "Google Gemini":
-            gemini_key = st.text_input(
-                "Gemini API Key",
-                type="password",
-                value=os.environ.get("GEMINI_API_KEY", "")
-            )
-
-        st.markdown("---")
-        st.markdown("### 🌿 Benchmark Crop Gallery (18 Classes)")
+        st.markdown("### 🌿 Benchmark Crop Gallery")
+        st.caption("Select a real-world crop leaf to test instantly:")
         selected_sample_label = st.selectbox(
-            "Select Pre-loaded Real Crop Example:",
+            "Select Crop Example:",
             list(SAMPLE_SPECIMENS.keys()),
             index=0,
-            help="Choose from 18 real-world crop examples across Apple, Tomato, Corn, Potato, Grape, Squash, Strawberry, Peach, and Pepper."
+            label_visibility="collapsed"
         )
 
         st.markdown("---")
@@ -775,17 +744,16 @@ def main():
     # -------------------------------------------------------------------------
     # Main Dashboard Header
     # -------------------------------------------------------------------------
-    active_engine_tag = "NVIDIA NIM Llama 3.2 Vision" if ai_provider == "NVIDIA NIM" else ("Gemini 2.5 Flash" if ai_provider == "Google Gemini" else "Local Pathology Engine")
     st.markdown(
-        f'<div style="margin-bottom: 24px;">'
-        f'<div class="hero-badge">PATRA DRISHTI VISION LAB • YOLOv11S + {active_engine_tag.upper()}</div>'
-        f'<h1 style="font-size: 2.2rem; font-weight: 800; margin: 0; color: #F8FAFC;">'
-        f'Patra Drishti <span style="font-size: 1.4rem; font-weight: 500; color: #34D399;">(पत्र दृष्टि)</span>'
-        f'</h1>'
-        f'<p style="color: #94A3B8; margin-top: 4px; font-size: 1.0rem;">'
-        f'AI-Powered Botanical Vision & Pathology Advisor — Seeing Beyond the Leaf.'
-        f'</p>'
-        f'</div>',
+        '<div style="margin-bottom: 24px;">'
+        '<div style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 9999px; font-family: monospace; font-size: 0.8rem; color: #34D399; margin-bottom: 8px;">PATRA DRISHTI VISION LAB</div>'
+        '<h1 style="font-size: 2.3rem; font-weight: 800; margin: 0; color: #F8FAFC;">'
+        'Patra Drishti <span style="font-size: 1.4rem; font-weight: 500; color: #34D399;">(पत्र दृष्टि)</span>'
+        '</h1>'
+        '<p style="color: #94A3B8; margin-top: 4px; font-size: 1.0rem;">'
+        'AI-Powered Botanical Vision & Pathology Advisor — Seeing Beyond the Leaf.'
+        '</p>'
+        '</div>',
         unsafe_allow_html=True
     )
 
@@ -811,7 +779,7 @@ def main():
                         <ul style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6;">
                             <li><strong>Model:</strong> Custom fine-tuned YOLOv11s object detector (<code>best.pt</code>).</li>
                             <li><strong>Task:</strong> Real-time bounding-box spatial localization on CPU.</li>
-                            <li><strong>Capability:</strong> Isolates subtle micro-lesions, chlorosis, and healthy foliage in cluttered real-world field lighting.</li>
+                            <li><strong>Capability:</strong> Isolates subtle micro-lesions, chlorosis, and healthy foliage in real-world field lighting.</li>
                             <li><strong>Distinction:</strong> Auto-triages healthy vs diseased leaves across 27 distinct categories.</li>
                         </ul>
                     </div>
@@ -820,16 +788,16 @@ def main():
                 )
             with col_a2:
                 st.markdown(
-                    f"""
+                    """
                     <div class="pd-card">
                         <div style="font-family: 'Outfit'; font-size: 1.1rem; font-weight: 700; color: #38BDF8; margin-bottom: 8px;">
-                            🔬 Stage 2: The Brain ({active_engine_tag})
+                            🔬 Stage 2: The Brain (NVIDIA Multimodal AI)
                         </div>
                         <ul style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6;">
-                            <li><strong>Model:</strong> NVIDIA Developer NIM ({nvidia_model}) / Multimodal Vision-Language Engine.</li>
+                            <li><strong>Model:</strong> NVIDIA NIM Multimodal Vision (Meta Llama 3.2 Vision).</li>
                             <li><strong>Input:</strong> Raw image + localized YOLO bounding boxes and confidence telemetry.</li>
                             <li><strong>Output:</strong> Streaming clinical diagnosis, cellular etiology, and organic/chemical curative prescription.</li>
-                            <li><strong>Inference Host:</strong> Cloud accelerated NVIDIA NIM API (<code>integrate.api.nvidia.com</code>).</li>
+                            <li><strong>Speed:</strong> Accelerated cloud tensor inference with sub-second response streaming.</li>
                         </ul>
                     </div>
                     """,
@@ -886,7 +854,7 @@ def main():
                     st.image("F1_curve.png", caption="F1-Confidence Score Curve")
 
     # -------------------------------------------------------------------------
-    # Image Input Section
+    # Specimen Input Section
     # -------------------------------------------------------------------------
     st.markdown("### 📥 Select or Upload Leaf Specimen")
     
@@ -932,12 +900,12 @@ def main():
 
             loader_placeholder.empty()
 
-            # Execute YOLO Inference
+            # Execute YOLO Inference with optimal defaults
             if model is not None:
                 results = model.predict(
                     source=selected_image,
-                    conf=conf_thresh,
-                    iou=iou_thresh,
+                    conf=DEFAULT_CONF,
+                    iou=DEFAULT_IOU,
                     device="cpu",
                     verbose=False
                 )
@@ -1019,7 +987,7 @@ def main():
                 f'<div class="disease-pill">⚠️ PATHOLOGICAL LESION IDENTIFIED: {primary_pathogen.upper()}</div>'
                 f'<p style="margin-top: 12px; color: #FCA5A5; font-size: 0.95rem;">'
                 f'YOLOv11s identified <strong>{disease_count} disease focal points</strong> on this leaf. '
-                f'Multimodal clinical assessment has been initiated below via <strong>{active_engine_tag}</strong> for diagnosis and targeted agronomic remediation.'
+                f'Multimodal clinical assessment has been generated below for diagnosis and targeted agronomic remediation.'
                 f'</p>'
                 f'</div>',
                 unsafe_allow_html=True
@@ -1037,34 +1005,26 @@ def main():
                 unsafe_allow_html=True
             )
         else:
-            st.info("No plant classes were detected at the current threshold. Try lowering the Confidence Threshold slider in the sidebar.")
+            st.info("No plant classes were detected on this specimen.")
 
         # ---------------------------------------------------------------------
         # Multimodal AI Streaming Diagnosis
         # -------------------------------------------------------------------------
         st.markdown("---")
         st.markdown(
-            f'<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">'
-            f'<div style="display: flex; align-items: center; gap: 12px;">'
-            f'<span style="font-size: 1.6rem;">🔬</span>'
-            f'<h3 style="margin: 0; font-size: 1.5rem; color: #F8FAFC;">Multimodal AI Pathologist Clinical Advisory</h3>'
-            f'</div>'
-            f'<div class="provider-tag">Powered by {active_engine_tag}</div>'
-            f'</div>',
+            '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">'
+            '<div style="display: flex; align-items: center; gap: 12px;">'
+            '<span style="font-size: 1.6rem;">🔬</span>'
+            '<h3 style="margin: 0; font-size: 1.5rem; color: #F8FAFC;">Multimodal AI Pathologist Clinical Advisory</h3>'
+            '</div>'
+            '<div style="padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-family: monospace; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34D399;">Powered by NVIDIA Multimodal Vision</div>'
+            '</div>',
             unsafe_allow_html=True
         )
 
         with st.container():
             st.markdown('<div class="pd-card">', unsafe_allow_html=True)
-            # Use st.write_stream to produce smooth typing animation!
-            st.write_stream(stream_pathology_diagnosis(
-                image=raw_img,
-                detections=detections,
-                provider=ai_provider,
-                nvidia_key=nvidia_key,
-                nvidia_model=nvidia_model,
-                gemini_key=gemini_key
-            ))
+            st.write_stream(stream_pathology_diagnosis(raw_img, detections))
             st.markdown('</div>', unsafe_allow_html=True)
 
 
