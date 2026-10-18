@@ -4,6 +4,7 @@ import base64
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 import streamlit as st
+import streamlit.components.v1 as components
 
 # Ultralytics YOLO
 try:
@@ -591,10 +592,48 @@ button[kind="primary"]:hover {
         padding: 4px 10px !important;
     }
 }
+
+/* Suppress virtual keyboard on mobile selectbox */
+div[data-testid="stSelectbox"] input {
+    caret-color: transparent !important;
+    cursor: pointer !important;
+}
+
+@media (pointer: coarse) {
+    div[data-testid="stSelectbox"] input {
+        pointer-events: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+    }
+}
 </style>
 """
 
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+# JavaScript helper to prevent mobile keyboard from opening on selectbox tap
+components.html(
+    """
+    <script>
+    function preventKeyboardOnSelect() {
+        try {
+            const doc = window.parent.document;
+            const selectInputs = doc.querySelectorAll('div[data-testid="stSelectbox"] input');
+            selectInputs.forEach(inp => {
+                inp.setAttribute('inputmode', 'none');
+                inp.setAttribute('readonly', 'true');
+                inp.style.caretColor = 'transparent';
+                inp.style.cursor = 'pointer';
+            });
+        } catch (err) {}
+    }
+    setInterval(preventKeyboardOnSelect, 300);
+    preventKeyboardOnSelect();
+    </script>
+    """,
+    height=0,
+    width=0
+)
 
 
 # -----------------------------------------------------------------------------
@@ -1095,7 +1134,7 @@ def main():
     with st.container(border=True):
         input_source = st.radio(
             "Choose Specimen Input Source:",
-            ["🌿 Benchmark Crop Gallery (18 Classes)", "📤 Upload Custom Leaf Specimen"],
+            ["🌿 Benchmark Crop Gallery (20 Classes)", "📤 Upload Custom Leaf Specimen"],
             index=0,
             horizontal=True,
             key="leaf_input_source"
@@ -1108,6 +1147,12 @@ def main():
                 index=0,
                 key="benchmark_specimen_select"
             )
+
+            # Instantly reset analysis state on new selection so the new leaf reflects immediately
+            if st.session_state.get("last_selected_specimen") != selected_sample_label:
+                st.session_state.last_selected_specimen = selected_sample_label
+                st.session_state.analysis_complete = False
+
             sample_path = SAMPLE_SPECIMENS.get(selected_sample_label)
             if sample_path and os.path.exists(sample_path):
                 selected_image = Image.open(sample_path)
