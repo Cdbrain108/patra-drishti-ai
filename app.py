@@ -27,7 +27,7 @@ st.set_page_config(
     page_title="Patra Drishti (पत्र दृष्टि) — AI Botanical Vision",
     page_icon="🌿",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 LOGO_PATH = os.path.join("assets", "logo.png")
@@ -147,9 +147,16 @@ html, body, [data-testid="stAppViewContainer"] {
     color: var(--text-primary);
 }
 
-[data-testid="stSidebar"] {
-    background-color: #0B0F17;
-    border-right: 1px solid rgba(255, 255, 255, 0.07);
+/* Completely hide sidebar and collapse toggle */
+[data-testid="stSidebar"], [data-testid="collapsedControl"], header[data-testid="stHeader"] button[kind="header"] {
+    display: none !important;
+}
+
+.main .block-container {
+    max-width: 1200px !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    margin: 0 auto !important;
 }
 
 /* Center and clean splash screen */
@@ -682,48 +689,37 @@ def main():
     # Load YOLO Model
     model, load_err = load_yolo_model()
 
-    # Clean, Clutter-Free Sidebar
-    with st.sidebar:
-        if LOGO_B64:
-            st.markdown(
-                f'<div style="text-align: center; margin-bottom: 16px;">'
-                f'<img src="data:image/png;base64,{LOGO_B64}" style="width: 85px; height: 85px; border-radius: 18px; border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);">'
-                f'<div style="font-family: \'Outfit\', sans-serif; font-size: 1.3rem; font-weight: 700; color: #F8FAFC; margin-top: 8px;">Patra Drishti</div>'
-                f'<div style="font-size: 0.78rem; color: #10B981; font-family: monospace;">पत्र दृष्टि • Botanical AI</div>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-
-        st.markdown("---")
-        st.markdown("### 🌿 Benchmark Crop Gallery")
-        st.caption("Select a real-world crop leaf to test instantly:")
-        selected_sample_label = st.selectbox(
-            "Select Crop Example:",
-            list(SAMPLE_SPECIMENS.keys()),
-            index=0,
-            label_visibility="collapsed"
+    # -------------------------------------------------------------------------
+    # Main Dashboard Header Navbar (No Sidebar)
+    # -------------------------------------------------------------------------
+    col_h1, col_h2 = st.columns([3.5, 1], gap="medium")
+    with col_h1:
+        logo_snippet = (
+            f'<img src="data:image/png;base64,{LOGO_B64}" style="width: 54px; height: 54px; border-radius: 14px; border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);">'
+            if LOGO_B64 else ""
         )
-
-        st.markdown("---")
+        st.markdown(
+            f"""
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
+                {logo_snippet}
+                <div>
+                    <div style="font-family: 'Outfit', sans-serif; font-size: 2.1rem; font-weight: 800; color: #F8FAFC; line-height: 1.1;">
+                        Patra Drishti <span style="font-size: 1.3rem; font-weight: 500; color: #34D399;">(पत्र दृष्टि)</span>
+                    </div>
+                    <div style="font-size: 0.9rem; color: #94A3B8;">
+                        AI-Powered Botanical Vision &amp; Pathology Advisor — Seeing Beyond the Leaf
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    with col_h2:
+        st.markdown('<div style="text-align: right; padding-top: 10px;">', unsafe_allow_html=True)
         if st.button("🔁 Replay Intro Splash", use_container_width=True):
             st.session_state.intro_shown = False
             st.rerun()
-
-    # -------------------------------------------------------------------------
-    # Main Dashboard Header
-    # -------------------------------------------------------------------------
-    st.markdown(
-        '<div style="margin-bottom: 24px;">'
-        '<div style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 9999px; font-family: monospace; font-size: 0.8rem; color: #34D399; margin-bottom: 8px;">PATRA DRISHTI VISION LAB</div>'
-        '<h1 style="font-size: 2.3rem; font-weight: 800; margin: 0; color: #F8FAFC;">'
-        'Patra Drishti <span style="font-size: 1.4rem; font-weight: 500; color: #34D399;">(पत्र दृष्टि)</span>'
-        '</h1>'
-        '<p style="color: #94A3B8; margin-top: 4px; font-size: 1.0rem;">'
-        'AI-Powered Botanical Vision & Pathology Advisor — Seeing Beyond the Leaf.'
-        '</p>'
-        '</div>',
-        unsafe_allow_html=True
-    )
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
     # System Architecture & PlantDoc Dataset Overview Tabs
@@ -822,66 +818,122 @@ def main():
                     st.image("F1_curve.png", caption="F1-Confidence Score Curve")
 
     # -------------------------------------------------------------------------
-    # Specimen Input Section
+    # Specimen Input Section (Side-by-Side Dual Selector)
     # -------------------------------------------------------------------------
     st.markdown("### 📥 Select or Upload Leaf Specimen")
     
-    col_up, col_preview = st.columns([1.5, 1])
+    col_bench, col_up = st.columns(2, gap="medium")
     
-    selected_image = None
-    with col_up:
-        uploaded_file = st.file_uploader(
-            "Upload high-resolution plant or leaf image (JPG, PNG, WEBP):",
-            type=["jpg", "jpeg", "png", "webp"]
+    with col_bench:
+        st.markdown(
+            """
+            <div class="pd-card" style="min-height: 190px;">
+                <div style="font-family: 'Outfit'; font-weight: 700; font-size: 1.15rem; color: #34D399; margin-bottom: 6px;">
+                    🌿 Option A: Benchmark Crop Gallery
+                </div>
+                <div style="font-size: 0.88rem; color: #94A3B8; margin-bottom: 12px;">
+                    Select from 18 verified real-world crop specimens across 9 plant varieties:
+                </div>
+            """,
+            unsafe_allow_html=True
         )
+        selected_sample_label = st.selectbox(
+            "Select Crop Specimen:",
+            list(SAMPLE_SPECIMENS.keys()),
+            index=0,
+            label_visibility="collapsed",
+            key="benchmark_specimen_select"
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    # Check sample image trigger
+    with col_up:
+        st.markdown(
+            """
+            <div class="pd-card" style="min-height: 190px;">
+                <div style="font-family: 'Outfit'; font-weight: 700; font-size: 1.15rem; color: #38BDF8; margin-bottom: 6px;">
+                    📤 Option B: Upload Custom Specimen
+                </div>
+                <div style="font-size: 0.88rem; color: #94A3B8; margin-bottom: 12px;">
+                    Or drag and drop your own plant leaf photograph (JPG, PNG, WEBP):
+                </div>
+            """,
+            unsafe_allow_html=True
+        )
+        uploaded_file = st.file_uploader(
+            "Upload leaf image:",
+            type=["jpg", "jpeg", "png", "webp"],
+            label_visibility="collapsed",
+            key="custom_leaf_upload"
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # Resolve selected image
     sample_path = SAMPLE_SPECIMENS.get(selected_sample_label)
     if sample_path and os.path.exists(sample_path):
         selected_image = Image.open(sample_path)
+        source_badge = f"🌿 Benchmark Specimen: {selected_sample_label}"
     elif uploaded_file is not None:
         selected_image = Image.open(uploaded_file)
+        source_badge = f"📤 Uploaded Specimen: {uploaded_file.name}"
+    else:
+        selected_image = None
+        source_badge = ""
 
     if selected_image is not None:
-        with col_preview:
-            st.image(selected_image, caption=f"Specimen: {selected_sample_label if sample_path else 'Uploaded File'}", use_container_width=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        col_prev1, col_prev2 = st.columns([1, 1.3], gap="medium")
+        with col_prev1:
+            st.image(selected_image, caption=source_badge, use_container_width=True)
+        with col_prev2:
+            st.markdown(
+                f"""
+                <div class="pd-card" style="height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="font-size: 0.8rem; font-family: monospace; color: #10B981; margin-bottom: 6px;">● SPECIMEN READY</div>
+                    <div style="font-family: 'Outfit'; font-size: 1.35rem; font-weight: 700; color: #F8FAFC; margin-bottom: 8px;">
+                        {source_badge}
+                    </div>
+                    <div style="font-size: 0.9rem; color: #94A3B8; margin-bottom: 20px; line-height: 1.5;">
+                        Click below to launch real-time YOLOv11s cellular lesion localization and stream complete agronomic pathology guidance powered by NVIDIA Multimodal AI.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            if st.button("⚡ Run Computer Vision & Pathology Diagnostics", type="primary", use_container_width=True):
+                st.session_state.current_image = selected_image
+                st.session_state.analysis_complete = False
 
-        # Trigger Analysis Button
-        if st.button("⚡ Run Computer Vision & Pathology Diagnostics", type="primary", use_container_width=True):
-            st.session_state.current_image = selected_image
-            st.session_state.analysis_complete = False
+                # Render ChatGPT Blue Dot-Matrix Animated Loader
+                loader_placeholder = st.empty()
+                
+                stages = [
+                    ("Scanning leaf venation & cuticular layers...", 16),
+                    ("Extracting multi-scale spatial tensor features...", 35),
+                    ("Localizing pathological bounding boxes & lesions...", 51),
+                    ("Cross-referencing PlantDoc 27-class taxonomy...", 88),
+                    ("Querying NVIDIA Multimodal Vision Tensor...", 100),
+                ]
 
-            # Render ChatGPT Blue Dot-Matrix Animated Loader
-            loader_placeholder = st.empty()
-            
-            stages = [
-                ("Scanning leaf venation & cuticular layers...", 16),
-                ("Extracting multi-scale spatial tensor features...", 35),
-                ("Localizing pathological bounding boxes & lesions...", 51),
-                ("Cross-referencing PlantDoc 27-class taxonomy...", 88),
-                ("Querying NVIDIA Multimodal Vision Tensor...", 100),
-            ]
+                for status, pct in stages:
+                    loader_placeholder.markdown(render_dot_matrix_loader(status, pct), unsafe_allow_html=True)
+                    time.sleep(0.35)
 
-            for status, pct in stages:
-                loader_placeholder.markdown(render_dot_matrix_loader(status, pct), unsafe_allow_html=True)
-                time.sleep(0.35)
+                loader_placeholder.empty()
 
-            loader_placeholder.empty()
+                # Execute YOLO Inference with optimal defaults
+                if model is not None:
+                    results = model.predict(
+                        source=selected_image,
+                        conf=DEFAULT_CONF,
+                        iou=DEFAULT_IOU,
+                        device="cpu",
+                        verbose=False
+                    )
+                    st.session_state.yolo_results = results
+                else:
+                    st.error(f"Inference Model Error: {load_err}")
 
-            # Execute YOLO Inference with optimal defaults
-            if model is not None:
-                results = model.predict(
-                    source=selected_image,
-                    conf=DEFAULT_CONF,
-                    iou=DEFAULT_IOU,
-                    device="cpu",
-                    verbose=False
-                )
-                st.session_state.yolo_results = results
-            else:
-                st.error(f"Inference Model Error: {load_err}")
-
-            st.session_state.analysis_complete = True
+                st.session_state.analysis_complete = True
 
     # -------------------------------------------------------------------------
     # Inference Results Display
