@@ -253,6 +253,27 @@ html, body, [data-testid="stAppViewContainer"] {
     margin-bottom: 20px;
 }
 
+/* Streamlit Container Border Wrapper Styling */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-card) !important;
+    border-radius: 16px !important;
+    backdrop-filter: blur(16px) !important;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5) !important;
+    margin-bottom: 20px !important;
+}
+
+div[data-testid="stRadio"] label, div[data-testid="stSelectbox"] label, div[data-testid="stFileUploader"] label {
+    color: #F8FAFC !important;
+    font-weight: 600 !important;
+}
+
+div[data-testid="stRadio"] div[role="radiogroup"] label p {
+    color: #F1F5F9 !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+}
+
 /* Healthy Badge */
 .healthy-pill {
     display: inline-flex;
@@ -914,66 +935,45 @@ def main():
                     st.image("F1_curve.png", caption="F1-Confidence Score Curve")
 
     # -------------------------------------------------------------------------
-    # Specimen Input Section (Side-by-Side Dual Selector)
+    # Specimen Input Section (Single Option Selector: Benchmark vs Custom Upload)
     # -------------------------------------------------------------------------
     st.markdown("### 📥 Select or Upload Leaf Specimen")
     
-    col_bench, col_up = st.columns(2, gap="medium")
-    
-    with col_bench:
-        st.markdown(
-            """
-            <div class="pd-card" style="min-height: 190px;">
-                <div style="font-family: 'Outfit'; font-weight: 700; font-size: 1.15rem; color: #34D399; margin-bottom: 6px;">
-                    🌿 Option A: Benchmark Crop Gallery
-                </div>
-                <div style="font-size: 0.88rem; color: #94A3B8; margin-bottom: 12px;">
-                    Select from 18 verified real-world crop specimens across 9 plant varieties:
-                </div>
-            """,
-            unsafe_allow_html=True
-        )
-        selected_sample_label = st.selectbox(
-            "Select Crop Specimen:",
-            list(SAMPLE_SPECIMENS.keys()),
+    with st.container(border=True):
+        input_source = st.radio(
+            "Choose Specimen Input Source:",
+            ["🌿 Benchmark Crop Gallery (18 Classes)", "📤 Upload Custom Leaf Specimen"],
             index=0,
-            label_visibility="collapsed",
-            key="benchmark_specimen_select"
+            horizontal=True,
+            key="leaf_input_source"
         )
-        st.markdown("</div>", unsafe_allow_html=True)
 
-    with col_up:
-        st.markdown(
-            """
-            <div class="pd-card" style="min-height: 190px;">
-                <div style="font-family: 'Outfit'; font-weight: 700; font-size: 1.15rem; color: #38BDF8; margin-bottom: 6px;">
-                    📤 Option B: Upload Custom Specimen
-                </div>
-                <div style="font-size: 0.88rem; color: #94A3B8; margin-bottom: 12px;">
-                    Or drag and drop your own plant leaf photograph (JPG, PNG, WEBP):
-                </div>
-            """,
-            unsafe_allow_html=True
-        )
-        uploaded_file = st.file_uploader(
-            "Upload leaf image:",
-            type=["jpg", "jpeg", "png", "webp"],
-            label_visibility="collapsed",
-            key="custom_leaf_upload"
-        )
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # Resolve selected image
-    sample_path = SAMPLE_SPECIMENS.get(selected_sample_label)
-    if sample_path and os.path.exists(sample_path):
-        selected_image = Image.open(sample_path)
-        source_badge = f"🌿 Benchmark Specimen: {selected_sample_label}"
-    elif uploaded_file is not None:
-        selected_image = Image.open(uploaded_file)
-        source_badge = f"📤 Uploaded Specimen: {uploaded_file.name}"
-    else:
-        selected_image = None
-        source_badge = ""
+        if "Benchmark Crop Gallery" in input_source:
+            selected_sample_label = st.selectbox(
+                "Select Crop Specimen from Benchmark Gallery:",
+                list(SAMPLE_SPECIMENS.keys()),
+                index=0,
+                key="benchmark_specimen_select"
+            )
+            sample_path = SAMPLE_SPECIMENS.get(selected_sample_label)
+            if sample_path and os.path.exists(sample_path):
+                selected_image = Image.open(sample_path)
+                source_badge = f"🌿 Benchmark Specimen: {selected_sample_label}"
+            else:
+                selected_image = None
+                source_badge = ""
+        else:
+            uploaded_file = st.file_uploader(
+                "Upload your plant leaf photograph (JPG, PNG, WEBP):",
+                type=["jpg", "jpeg", "png", "webp"],
+                key="custom_leaf_upload"
+            )
+            if uploaded_file is not None:
+                selected_image = Image.open(uploaded_file)
+                source_badge = f"📤 Uploaded Specimen: {uploaded_file.name}"
+            else:
+                selected_image = None
+                source_badge = ""
 
     if selected_image is not None:
         st.markdown("<br>", unsafe_allow_html=True)
